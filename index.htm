@@ -1,1 +1,1372 @@
-123
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moster怪兽桌游吧mini服务器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        #login-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: white;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            font-size: 1.5em;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .nav-item:hover {
+            filter: brightness(85%);
+        }
+
+        .nav-item a {
+            color: white;
+            text-decoration: none;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .nav-item .note {
+            margin-top: 10px;
+            font-size: 0.6em;
+            padding: 5px 10px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            white-space: pre-wrap;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .delete-icon, .lock-icon, .edit-icon, .image-icon, .number-icon, .visibility-icon, .bg-upload-icon, .title-edit-icon {
+            position: absolute;
+            cursor: pointer;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .lock-icon {
+            top: 5px;
+            left: 5px;
+        }
+
+        .lock-icon[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+            top: 25px;
+            left: 0;
+        }
+
+        .delete-icon {
+            top: 5px;
+            right: 5px;
+        }
+
+        .delete-icon[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+            top: 25px;
+            right: 0;
+        }
+
+        .edit-icon {
+            bottom: 5px;
+            right: 5px;
+        }
+
+        .edit-icon[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+            bottom: 25px;
+            right: 0;
+        }
+
+        .image-icon {
+            bottom: 5px;
+            left: 5px;
+        }
+
+        .image-icon[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+            bottom: 25px;
+            left: 0;
+        }
+
+        .number-icon {
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2em;
+            cursor: default;
+        }
+
+        .visibility-icon {
+            top: 5px;
+            left: 60%; /* 放置在编号右侧 */
+            transform: translateX(-50%);
+            font-size: 1.2em;
+            cursor: default;
+        }
+
+        .visibility-icon[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+            top: 25px;
+            left: 0;
+        }
+
+        .nav-item.locked .delete-icon,
+        .nav-item.locked .edit-icon,
+        .nav-item.locked .image-icon {
+            color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .nav-item.dragging {
+            opacity: 0.6;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transform: scale(1.05);
+        }
+
+        .nav-item.placeholder {
+            border: 2px dashed #666;
+            background: rgba(0, 0, 0, 0.1);
+            opacity: 0.5;
+        }
+
+        /* 未登录时隐藏操作图标和最后保存时间 */
+        .not-logged-in .lock-icon,
+        .not-logged-in .delete-icon,
+        .not-logged-in .edit-icon,
+        .not-logged-in .image-icon,
+        .not-logged-in .visibility-icon, /* 未登录时隐藏睁眼图标 */
+        .not-logged-in #backup-button,
+        .not-logged-in #bg-upload-button,
+        .not-logged-in #add-button,
+        .not-logged-in #title-edit-button,
+        .not-logged-in #last-saved {
+            display: none !important; /* 增加优先级，确保隐藏 */
+        }
+
+        main {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .welcome-box {
+            display: inline-block;
+            padding: 15px 25px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 20px auto;
+        }
+
+        .welcome-box h2, .welcome-box p {
+            margin: 5px 0;
+            color: #333;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 27px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 20px;
+        }
+
+        #last-saved {
+            color: white;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        #footer-buttons {
+            display: flex;
+            gap: 10px;
+            margin-right: 20px;
+            position: relative;
+        }
+
+        #add-button, #bg-upload-button, #backup-button, #title-edit-button {
+            background-color: #4a90e2;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        #title-edit-button {
+            z-index: 3000;
+        }
+
+        #add-form, #edit-form, #upload-form, #bg-upload-form, #edit-title-form, #login-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #e8ecef;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            color: #5c6b73;
+            width: 300px;
+        }
+
+        #add-form h3, #edit-form h3, #upload-form h3, #bg-upload-form h3, #edit-title-form h3, #login-form h3 {
+            margin: 0 0 15px;
+            font-size: 1.2em;
+            color: #5c6b73;
+            position: relative;
+        }
+
+        .close-icon {
+            position: absolute;
+            top: 0;
+            right: 0;
+            color: red;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .close-icon:hover {
+            color: darkred;
+        }
+
+        #add-form label, #edit-form label {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #5c6b73;
+        }
+
+        #add-form input, #edit-form input, #upload-form input, #bg-upload-form input, #edit-title-form input, #login-form input {
+            display: block;
+            margin: 5px 0 10px 0;
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #c9d6df;
+            border-radius: 5px;
+            background-color: #f5f7fa;
+            color: #5c6b73;
+            box-sizing: border-box;
+        }
+
+        #add-form textarea, #edit-form textarea {
+            display: block;
+            margin: 5px 0 10px 0;
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #c9d6df;
+            border-radius: 5px;
+            background-color: #f5f7fa;
+            color: #5c6b73;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        #add-form input::placeholder, #edit-form input::placeholder,
+        #add-form textarea::placeholder, #edit-form textarea::placeholder,
+        #edit-title-form input::placeholder, #login-form input::placeholder {
+            color: #9db4c0;
+        }
+
+        #add-form button, #edit-form button, #upload-form button, #bg-upload-form button, #edit-title-form button, #login-form button {
+            margin: 5px 1%;
+            padding: 8px 15px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            display: inline-block; /* 按钮在一排 */
+            width: 45%; /* 缩小按钮宽度 */
+        }
+
+        #add-form #submit-add, #edit-form #submit-edit, #upload-form #submit-upload, #bg-upload-form #submit-bg-upload, #edit-title-form #submit-title-edit, #login-form #submit-login {
+            background-color: #a3bffa;
+            color: #5c6b73;
+        }
+
+        #add-form #submit-add:hover, #edit-form #submit-edit:hover, #upload-form #submit-upload:hover, #bg-upload-form #submit-bg-upload:hover, #edit-title-form #submit-title-edit:hover, #login-form #submit-login:hover {
+            background-color: #8c9eff;
+        }
+
+        #add-form #cancel-add, #edit-form #cancel-edit, #upload-form #cancel-upload, #bg-upload-form #cancel-bg-upload, #edit-title-form #cancel-title-edit, #login-form #cancel-login {
+            background-color: #d1d9e0;
+            color: #5c6b73;
+        }
+
+        #add-form #cancel-add:hover, #edit-form #cancel-edit:hover, #upload-form #cancel-upload:hover, #bg-upload-form #cancel-bg-upload:hover, #edit-title-form #cancel-title-edit:hover, #login-form #cancel-login:hover {
+            background-color: #b0bec5;
+        }
+
+        /* 单选按钮样式 */
+        .admin-only-options {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: nowrap; /* 防止换行 */
+        }
+
+        .admin-only-options label {
+            margin-right: 10px; /* 减小间距 */
+            display: flex;
+            align-items: center;
+            white-space: nowrap; /* 防止文字换行 */
+        }
+
+        .admin-only-options input {
+            margin-right: 5px;
+        }
+
+        /* 是否保存密码样式 */
+        .save-password-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .save-password-container label {
+            margin-right: 10px;
+            white-space: nowrap; /* 防止文字换行 */
+        }
+    </style>
+</head>
+<body class="not-logged-in">
+    <header>
+        <div id="login-button">🔑</div>
+        <h1 id="site-title">Moster怪兽桌游吧mini服务器</h1>
+    </header>
+    <nav id="nav-menu">
+        <!-- 导航项将动态插入这里 -->
+    </nav>
+    <main>
+        <div class="welcome-box">
+            <h2 id="welcome-text">欢迎来到Moster mini服务器</h2>
+            <p>点击上方的导航块，访问服务器上的网页网站。</p>
+        </div>
+    </main>
+    <footer>
+        <div id="footer-content">
+            <div>Power By DZG | V2.0</div>
+            <div id="last-saved">未保存</div>
+        </div>
+        <div id="footer-buttons">
+            <div id="backup-button" title="备份数据">💾</div>
+            <div id="bg-upload-button" title="上传网页背景">🖼️</div>
+            <div id="add-button" title="添加导航块">+</div>
+            <div id="title-edit-button" title="编辑网站标题">✏️</div>
+        </div>
+    </footer>
+    <div id="add-form">
+        <h3>添加新网站导航<span class="close-icon" onclick="document.getElementById('add-form').style.display='none'">✖</span></h3>
+        <label>网站名称：</label>
+        <input type="text" id="new-text" placeholder="请输入网站名称">
+        <label>网址：</label>
+        <input type="text" id="new-href" placeholder="请输入网站链接" value="http://">
+        <label>备注：</label>
+        <textarea id="new-note" rows="5" placeholder="请输入备注（可选）"></textarea>
+        <label>管理员备注：（只有管理员可见）</label>
+        <textarea id="new-admin-note" rows="5" placeholder="请输入管理员备注（可选）"></textarea>
+        <div class="admin-only-options">
+            <label>仅管理可见</label>
+            <label><input type="radio" name="new-admin-only" value="true"> 是</label>
+            <label><input type="radio" name="new-admin-only" value="false" checked> 否</label>
+        </div>
+        <button id="submit-add">添加</button>
+        <button id="cancel-add">取消</button>
+    </div>
+    <div id="edit-form">
+        <h3>编辑网站导航<span class="close-icon" onclick="document.getElementById('edit-form').style.display='none'">✖</span></h3>
+        <label>网站名称：</label>
+        <input type="text" id="edit-text" placeholder="请输入网站名称">
+        <label>网址：</label>
+        <input type="text" id="edit-href" placeholder="请输入网站链接">
+        <label>备注：</label>
+        <textarea id="edit-note" rows="5" placeholder="请输入备注（可选）"></textarea>
+        <label>管理员备注：（只有管理员可见）</label>
+        <textarea id="edit-admin-note" rows="5" placeholder="请输入管理员备注（可选）"></textarea>
+        <div class="admin-only-options">
+            <label>仅管理可见</label>
+            <label><input type="radio" name="edit-admin-only" value="true"> 是</label>
+            <label><input type="radio" name="edit-admin-only" value="false" checked> 否</label>
+        </div>
+        <button id="submit-edit">保存</button>
+        <button id="cancel-edit">取消</button>
+    </div>
+    <div id="upload-form">
+        <h3>上传背景图片<span class="close-icon" onclick="document.getElementById('upload-form').style.display='none'">✖</span></h3>
+        <input type="file" id="upload-image" accept="image/*">
+        <button id="submit-upload">上传</button>
+        <button id="cancel-upload">取消</button>
+    </div>
+    <div id="bg-upload-form">
+        <h3>上传网页背景<span class="close-icon" onclick="document.getElementById('bg-upload-form').style.display='none'">✖</span></h3>
+        <input type="file" id="bg-upload-image" accept="image/*">
+        <button id="submit-bg-upload">上传</button>
+        <button id="cancel-bg-upload">取消</button>
+    </div>
+    <div id="edit-title-form">
+        <h3>编辑网站标题<span class="close-icon" onclick="document.getElementById('edit-title-form').style.display='none'">✖</span></h3>
+        <input type="text" id="edit-title-input" placeholder="请输入网站标题">
+        <button id="submit-title-edit">保存</button>
+        <button id="cancel-title-edit">取消</button>
+    </div>
+    <div id="login-form">
+        <h3>管理员登录<span class="close-icon" onclick="document.getElementById('login-form').style.display='none'">✖</span></h3>
+        <input type="text" id="login-username" placeholder="请输入用户名">
+        <input type="password" id="login-password" placeholder="请输入密码">
+        <div class="save-password-container">
+            <label for="save-password">是否保存密码</label>
+            <input type="checkbox" id="save-password">
+        </div>
+        <button id="submit-login">登录</button>
+        <button id="cancel-login">取消</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navMenu = document.getElementById('nav-menu');
+            const addButton = document.getElementById('add-button');
+            const bgUploadButton = document.getElementById('bg-upload-button');
+            const backupButton = document.getElementById('backup-button');
+            const titleEditButton = document.getElementById('title-edit-button');
+            const loginButton = document.getElementById('login-button');
+            const addForm = document.getElementById('add-form');
+            const editForm = document.getElementById('edit-form');
+            const uploadForm = document.getElementById('upload-form');
+            const bgUploadForm = document.getElementById('bg-upload-form');
+            const editTitleForm = document.getElementById('edit-title-form');
+            const loginForm = document.getElementById('login-form');
+            const newTextInput = document.getElementById('new-text');
+            const newHrefInput = document.getElementById('new-href');
+            const newNoteInput = document.getElementById('new-note');
+            const newAdminNoteInput = document.getElementById('new-admin-note');
+            const newAdminOnlyInputs = document.getElementsByName('new-admin-only');
+            const editTextInput = document.getElementById('edit-text');
+            const editHrefInput = document.getElementById('edit-href');
+            const editNoteInput = document.getElementById('edit-note');
+            const editAdminNoteInput = document.getElementById('edit-admin-note');
+            const editAdminOnlyInputs = document.getElementsByName('edit-admin-only');
+            const uploadImageInput = document.getElementById('upload-image');
+            const bgUploadImageInput = document.getElementById('bg-upload-image');
+            const editTitleInput = document.getElementById('edit-title-input');
+            const loginUsernameInput = document.getElementById('login-username');
+            const loginPasswordInput = document.getElementById('login-password');
+            const savePasswordCheckbox = document.getElementById('save-password');
+            const submitAddButton = document.getElementById('submit-add');
+            const cancelAddButton = document.getElementById('cancel-add');
+            const submitEditButton = document.getElementById('submit-edit');
+            const cancelEditButton = document.getElementById('cancel-edit');
+            const submitUploadButton = document.getElementById('submit-upload');
+            const cancelUploadButton = document.getElementById('cancel-upload');
+            const submitBgUploadButton = document.getElementById('submit-bg-upload');
+            const cancelBgUploadButton = document.getElementById('cancel-bg-upload');
+            const submitTitleEditButton = document.getElementById('submit-title-edit');
+            const cancelTitleEditButton = document.getElementById('cancel-title-edit');
+            const submitLoginButton = document.getElementById('submit-login');
+            const cancelLoginButton = document.getElementById('cancel-login');
+            const lastSavedDisplay = document.getElementById('last-saved');
+            const siteTitleElement = document.getElementById('site-title');
+            const welcomeTextElement = document.getElementById('welcome-text');
+
+            // Unicode 数字图标（① ② ③ ...）
+            const numberIcons = [
+                '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩',
+                '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'
+            ];
+
+            let lastSavedTime = null;
+            let timerInterval = null;
+            let draggedItem = null;
+            let placeholder = null;
+            let isLoggedIn = false;
+            let adminUser = null;
+            let adminPassword = null;
+
+            // 加载保存的用户名和密码（如果之前选择了保存）
+            if (localStorage.getItem('savePassword') === 'true') {
+                loginUsernameInput.value = localStorage.getItem('adminUser') || '';
+                loginPasswordInput.value = localStorage.getItem('adminPassword') || '';
+                savePasswordCheckbox.checked = true;
+            }
+
+            // 生成随机活跃颜色
+            function getRandomColor() {
+                const r = Math.floor(Math.random() * 156) + 100;
+                const g = Math.floor(Math.random() * 156) + 100;
+                const b = Math.floor(Math.random() * 156) + 100;
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            // 更新所有导航项的编号
+            function updateNumbers() {
+                const navItems = Array.from(navMenu.children);
+                navItems.forEach((navItem, index) => {
+                    const number = index + 1;
+                    navItem.dataset.number = number;
+                    const numberIcon = navItem.querySelector('.number-icon');
+                    if (numberIcon) {
+                        numberIcon.textContent = numberIcons[number - 1] || number;
+                    }
+                });
+            }
+
+            // 更新最后保存时间显示
+            function updateLastSavedDisplay() {
+                if (lastSavedTime === null) {
+                    lastSavedDisplay.textContent = '未保存';
+                    return;
+                }
+                const now = Date.now();
+                const secondsAgo = Math.floor((now - lastSavedTime) / 1000);
+                lastSavedDisplay.textContent = `网站设置自动保存于${secondsAgo}秒之前`;
+            }
+
+            // 开始计时器
+            function startTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                timerInterval = setInterval(updateLastSavedDisplay, 1000);
+            }
+
+            // 记录保存时间并更新显示
+            function recordSaveTime() {
+                lastSavedTime = Date.now();
+                updateLastSavedDisplay();
+                startTimer();
+            }
+
+            // 更新登录状态
+            function updateLoginState() {
+                if (isLoggedIn) {
+                    document.body.classList.remove('not-logged-in');
+                    loginButton.textContent = '🔓';
+                    loginButton.title = '登出';
+                    Array.from(navMenu.children).forEach(navItem => {
+                        navItem.style.display = 'flex'; // 登录后显示所有导航块
+                        navItem.draggable = navItem.dataset.locked === 'true' ? false : true; // 锁定块不可拖动
+                        // 确保图标显示
+                        const lockIcon = navItem.querySelector('.lock-icon');
+                        const deleteIcon = navItem.querySelector('.delete-icon');
+                        const editIcon = navItem.querySelector('.edit-icon');
+                        const imageIcon = navItem.querySelector('.image-icon');
+                        const visibilityIcon = navItem.querySelector('.visibility-icon');
+                        if (lockIcon) lockIcon.style.display = 'block';
+                        if (deleteIcon) deleteIcon.style.display = 'block';
+                        if (editIcon) editIcon.style.display = 'block';
+                        if (imageIcon) imageIcon.style.display = 'block';
+                        if (visibilityIcon) visibilityIcon.style.display = 'block';
+                    });
+                    lastSavedDisplay.style.display = 'block'; // 登录后显示最后保存时间
+                    // 确保页脚按钮显示
+                    backupButton.style.display = 'flex';
+                    bgUploadButton.style.display = 'flex';
+                    addButton.style.display = 'flex';
+                    titleEditButton.style.display = 'flex';
+                } else {
+                    document.body.classList.add('not-logged-in');
+                    loginButton.textContent = '🔑';
+                    loginButton.title = '登录';
+                    Array.from(navMenu.children).forEach(navItem => {
+                        if (navItem.dataset.adminOnly === 'true') {
+                            navItem.style.display = 'none'; // 未登录时隐藏管理可见的导航块
+                        } else {
+                            navItem.style.display = 'flex';
+                        }
+                        navItem.draggable = false; // 未登录时禁用拖动
+                        // 确保图标隐藏
+                        const lockIcon = navItem.querySelector('.lock-icon');
+                        const deleteIcon = navItem.querySelector('.delete-icon');
+                        const editIcon = navItem.querySelector('.edit-icon');
+                        const imageIcon = navItem.querySelector('.image-icon');
+                        const visibilityIcon = navItem.querySelector('.visibility-icon');
+                        if (lockIcon) lockIcon.style.display = 'none';
+                        if (deleteIcon) deleteIcon.style.display = 'none';
+                        if (editIcon) editIcon.style.display = 'none';
+                        if (imageIcon) imageIcon.style.display = 'none';
+                        if (visibilityIcon) visibilityIcon.style.display = 'none';
+                    });
+                    lastSavedDisplay.style.display = 'none'; // 未登录时隐藏最后保存时间
+                    // 确保页脚按钮隐藏
+                    backupButton.style.display = 'none';
+                    bgUploadButton.style.display = 'none';
+                    addButton.style.display = 'none';
+                    titleEditButton.style.display = 'none';
+                }
+            }
+
+            // 创建导航板块的函数（不触发保存）
+            function createNavItem(text, href, backgroundImage = '', locked = false, number = null, note = '', adminOnly = false, adminNote = '') {
+                const navItem = document.createElement('div');
+                navItem.className = 'nav-item';
+                navItem.draggable = isLoggedIn && !locked; // 登录且未锁定时可拖动
+                if (backgroundImage) {
+                    navItem.style.backgroundImage = `url(${backgroundImage})`;
+                } else {
+                    navItem.style.backgroundColor = getRandomColor();
+                }
+                navItem.dataset.locked = locked ? 'true' : 'false';
+                if (locked) {
+                    navItem.classList.add('locked');
+                }
+                navItem.dataset.text = text;
+                navItem.dataset.href = href;
+                navItem.dataset.backgroundImage = backgroundImage;
+                navItem.dataset.number = number || (navMenu.children.length + 1);
+                navItem.dataset.note = note;
+                navItem.dataset.adminOnly = adminOnly ? 'true' : 'false';
+                navItem.dataset.adminNote = adminNote || ''; // 保存管理员备注
+                if (!isLoggedIn && adminOnly) {
+                    navItem.style.display = 'none'; // 未登录时隐藏管理可见的导航块
+                }
+                navItem.innerHTML = `
+                    <span class="lock-icon" title="${locked ? '解锁导航块' : '锁定导航块'}">${locked ? '🔒' : '🔓'}</span>
+                    <span class="delete-icon" title="删除导航块">🗑️</span>
+                    <span class="edit-icon" title="编辑导航块">✏️</span>
+                    <span class="image-icon" title="上传背景图片">🖼️</span>
+                    <span class="number-icon">${numberIcons[(number || navMenu.children.length + 1) - 1] || (number || navMenu.children.length + 1)}</span>
+                    <span class="visibility-icon" title="全部可见">${adminOnly ? '' : '👁️'}</span>
+                    <a href="${href}" target="_blank">${text}</a>
+                    ${note ? `<span class="note">${note}</span>` : ''}
+                `;
+                navMenu.appendChild(navItem);
+                updateNumbers();
+                updateLoginState(); // 确保创建导航块后更新图标显示状态
+            }
+
+            // 从服务器加载数据
+            function loadData() {
+                fetch('save_data.php?action=read')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应错误: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('从服务器加载的数据:', data);
+                        navMenu.innerHTML = '';
+                        if (data && data.navItems && Array.isArray(data.navItems) && data.navItems.length > 0) {
+                            data.navItems.sort((a, b) => a.number - b.number);
+                            data.navItems.forEach(item => {
+                                createNavItem(
+                                    item.text,
+                                    item.href,
+                                    item.backgroundImage,
+                                    item.locked,
+                                    item.number,
+                                    item.note || '',
+                                    item.adminOnly || false,
+                                    item.adminNote || '' // 加载管理员备注
+                                );
+                            });
+                        } else {
+                            const defaultItems = [
+                                { text: '网站1', href: 'http://website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
+                                { text: '网站2', href: 'http://website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
+                                { text: '网站3', href: 'http://website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
+                                { text: '网站4', href: 'http://website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
+                                { text: '网站5', href: 'http://website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
+                            ];
+                            defaultItems.forEach(item => {
+                                createNavItem(item.text, item.href, item.backgroundImage, item.locked, item.number, item.note, item.adminOnly, item.adminNote);
+                            });
+                        }
+                        // 加载网页背景
+                        if (data && data.bodyBackground) {
+                            document.body.style.backgroundImage = `url(${data.bodyBackground})`;
+                            document.body.style.backgroundSize = 'cover';
+                            document.body.style.backgroundPosition = 'center';
+                            document.body.style.backgroundColor = '';
+                        }
+                        // 加载网站标题
+                        if (data && data.siteTitle) {
+                            siteTitleElement.textContent = data.siteTitle + '服务器';
+                            welcomeTextElement.textContent = `欢迎来到${data.siteTitle.replace('怪兽桌游吧', '')}服务器`;
+                        } else {
+                            siteTitleElement.textContent = 'Moster怪兽桌游吧mini服务器';
+                            welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
+                        }
+                        // 加载管理员账户
+                        adminUser = data.adminUser || 'mifen';
+                        adminPassword = data.adminPassword || '222222';
+                        updateLoginState();
+                        saveData();
+                    })
+                    .catch(error => {
+                        console.error('加载数据失败:', error);
+                        const defaultItems = [
+                            { text: '网站1', href: 'http://website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
+                            { text: '网站2', href: 'http://website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
+                            { text: '网站3', href: 'http://website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
+                            { text: '网站4', href: 'http://website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
+                            { text: '网站5', href: 'http://website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
+                        ];
+                        navMenu.innerHTML = '';
+                        defaultItems.forEach(item => {
+                            createNavItem(item.text, item.href, item.backgroundImage, item.locked, item.number, item.note, item.adminOnly, item.adminNote);
+                        });
+                        siteTitleElement.textContent = 'Moster怪兽桌游吧mini服务器';
+                        welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
+                        adminUser = 'mifen';
+                        adminPassword = '222222';
+                        updateLoginState();
+                        saveData();
+                    });
+            }
+
+            // 保存数据到服务器
+            function saveData() {
+                const items = Array.from(navMenu.children).map(navItem => ({
+                    text: navItem.dataset.text,
+                    href: navItem.dataset.href,
+                    backgroundImage: navItem.dataset.backgroundImage,
+                    locked: navItem.dataset.locked === 'true',
+                    number: parseInt(navItem.dataset.number),
+                    note: navItem.dataset.note || '',
+                    adminOnly: navItem.dataset.adminOnly === 'true',
+                    adminNote: navItem.dataset.adminNote || '' // 保存管理员备注
+                }));
+                const bodyBackground = document.body.style.backgroundImage ? document.body.style.backgroundImage.replace('url("', '').replace('")', '') : '';
+                const siteTitle = siteTitleElement.textContent.replace('服务器', '');
+                const dataToSave = {
+                    navItems: items,
+                    bodyBackground: bodyBackground,
+                    siteTitle: siteTitle,
+                    adminUser: adminUser,
+                    adminPassword: adminPassword
+                };
+                console.log('保存的数据:', dataToSave);
+                fetch('save_data.php?action=write', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSave)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('保存响应错误: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    if (!result.success) {
+                        console.error('保存数据失败:', result.message);
+                    } else {
+                        console.log('数据保存成功:', result);
+                        recordSaveTime();
+                    }
+                })
+                .catch(error => console.error('保存数据失败:', error));
+            }
+
+            // 初始加载数据
+            loadData();
+
+            // 登录/登出按钮点击事件
+            loginButton.addEventListener('click', function() {
+                if (isLoggedIn) {
+                    // 登出
+                    isLoggedIn = false;
+                    updateLoginState();
+                } else {
+                    // 显示登录表单
+                    loginForm.style.display = 'block';
+                    if (localStorage.getItem('savePassword') !== 'true') {
+                        loginUsernameInput.value = '';
+                        loginPasswordInput.value = '';
+                    }
+                }
+            });
+
+            // 提交登录
+            submitLoginButton.addEventListener('click', function() {
+                const username = loginUsernameInput.value.trim();
+                const password = loginPasswordInput.value.trim();
+                const savePassword = savePasswordCheckbox.checked;
+                if (username === adminUser && password === adminPassword) {
+                    isLoggedIn = true;
+                    loginForm.style.display = 'none';
+                    updateLoginState();
+                    // 保存用户名和密码到 localStorage（如果勾选了保存）
+                    if (savePassword) {
+                        localStorage.setItem('adminUser', username);
+                        localStorage.setItem('adminPassword', password);
+                        localStorage.setItem('savePassword', 'true');
+                    } else {
+                        localStorage.removeItem('adminUser');
+                        localStorage.removeItem('adminPassword');
+                        localStorage.removeItem('savePassword');
+                    }
+                } else {
+                    alert('用户名或密码错误！');
+                }
+            });
+
+            // 取消登录
+            cancelLoginButton.addEventListener('click', function() {
+                loginForm.style.display = 'none';
+            });
+
+            // 拖拽功能
+            navMenu.addEventListener('dragstart', function(event) {
+                if (!isLoggedIn) return; // 未登录时禁用拖动
+                const target = event.target.closest('.nav-item');
+                if (!target || target.dataset.locked === 'true') return; // 锁定块不可拖动
+                draggedItem = target;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', null);
+                setTimeout(() => {
+                    target.classList.add('dragging');
+                }, 0);
+
+                // 创建占位符
+                placeholder = document.createElement('div');
+                placeholder.className = 'nav-item placeholder';
+                placeholder.style.width = `${target.offsetWidth}px`;
+                placeholder.style.height = `${target.offsetHeight}px`;
+                target.parentNode.insertBefore(placeholder, target.nextSibling);
+            });
+
+            navMenu.addEventListener('dragover', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+
+                const target = event.target.closest('.nav-item');
+                if (!target || target === draggedItem || target.classList.contains('placeholder')) return;
+
+                const allItems = Array.from(navMenu.children);
+                const targetIndex = allItems.indexOf(target);
+                const placeholderIndex = allItems.indexOf(placeholder);
+
+                if (targetIndex < placeholderIndex) {
+                    navMenu.insertBefore(placeholder, target);
+                } else {
+                    navMenu.insertBefore(placeholder, target.nextSibling);
+                }
+            });
+
+            navMenu.addEventListener('drop', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                const target = event.target.closest('.nav-item');
+                if (!draggedItem) return;
+
+                const allItems = Array.from(navMenu.children);
+                const placeholderIndex = allItems.indexOf(placeholder);
+
+                if (placeholderIndex !== -1) {
+                    navMenu.insertBefore(draggedItem, placeholder);
+                }
+
+                // 移除占位符
+                if (placeholder) {
+                    placeholder.remove();
+                    placeholder = null;
+                }
+
+                // 拖动结束动画
+                draggedItem.classList.remove('dragging');
+                draggedItem.style.animation = 'dropAnimation 0.3s ease';
+                draggedItem = null;
+                updateNumbers();
+                saveData();
+            });
+
+            navMenu.addEventListener('dragend', function(event) {
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    draggedItem = null;
+                }
+                if (placeholder) {
+                    placeholder.remove();
+                    placeholder = null;
+                }
+            });
+
+            // 拖动结束的缩放动画
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes dropAnimation {
+                    0% { transform: scale(1.1); }
+                    50% { transform: scale(0.95); }
+                    100% { transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 事件委托：处理删除、锁定/解锁、编辑、更改背景图片和整个导航块点击跳转
+            navMenu.addEventListener('click', function(event) {
+                const target = event.target;
+                const navItem = target.closest('.nav-item');
+
+                if (!navItem) return;
+
+                if (!isLoggedIn) {
+                    if (!target.classList.contains('lock-icon') && 
+                        !target.classList.contains('delete-icon') && 
+                        !target.classList.contains('edit-icon') && 
+                        !target.classList.contains('image-icon') && 
+                        !target.classList.contains('number-icon') && 
+                        !target.classList.contains('visibility-icon') && 
+                        !target.classList.contains('note')) {
+                        window.open(navItem.dataset.href, '_blank');
+                    }
+                    return;
+                }
+
+                if (target.classList.contains('lock-icon')) {
+                    if (navItem.dataset.locked === 'false') {
+                        navItem.dataset.locked = 'true';
+                        target.textContent = '🔒';
+                        target.setAttribute('title', '解锁导航块');
+                        navItem.classList.add('locked');
+                        navItem.draggable = false; // 锁定后禁用拖动
+                    } else {
+                        navItem.dataset.locked = 'false';
+                        target.textContent = '🔓';
+                        target.setAttribute('title', '锁定导航块');
+                        navItem.classList.remove('locked');
+                        navItem.draggable = true; // 解锁后启用拖动
+                    }
+                    saveData();
+                    return;
+                }
+
+                if (navItem.dataset.locked === 'true' && 
+                    (target.classList.contains('delete-icon') || 
+                     target.classList.contains('edit-icon') || 
+                     target.classList.contains('image-icon'))) {
+                    alert('该板块已锁定，无法操作！');
+                    return;
+                }
+
+                if (target.classList.contains('delete-icon')) {
+                    const confirmDelete = confirm(`确定要删除导航块 "${navItem.dataset.text}" 吗？`);
+                    if (confirmDelete) {
+                        const text = navItem.dataset.text;
+                        if (navItem.dataset.backgroundImage) {
+                            fetch('save_data.php?action=delete_image', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ text: text })
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (!result.success) {
+                                    console.error('删除图片失败:', result.message);
+                                }
+                            })
+                            .catch(error => console.error('删除图片失败:', error));
+                        }
+                        navItem.remove();
+                        updateNumbers();
+                        saveData();
+                    }
+                } else if (target.classList.contains('edit-icon')) {
+                    editTextInput.value = navItem.dataset.text;
+                    editHrefInput.value = navItem.dataset.href;
+                    editNoteInput.value = navItem.dataset.note || '';
+                    editAdminNoteInput.value = navItem.dataset.adminNote || ''; // 加载管理员备注
+                    const adminOnly = navItem.dataset.adminOnly === 'true';
+                    editAdminOnlyInputs.forEach(input => {
+                        input.checked = (input.value === 'true') === adminOnly;
+                    });
+                    editForm.style.display = 'block';
+                    editForm.dataset.navItem = navItem.outerHTML;
+                } else if (target.classList.contains('image-icon')) {
+                    uploadForm.style.display = 'block';
+                    uploadForm.dataset.navItem = navItem.outerHTML;
+                    uploadImageInput.value = '';
+                } else if (!target.classList.contains('lock-icon') && 
+                           !target.classList.contains('delete-icon') && 
+                           !target.classList.contains('edit-icon') && 
+                           !target.classList.contains('image-icon') && 
+                           !target.classList.contains('number-icon') && 
+                           !target.classList.contains('visibility-icon') && 
+                           !target.classList.contains('note')) {
+                    window.open(navItem.dataset.href, '_blank');
+                }
+            });
+
+            // 显示添加表单
+            addButton.addEventListener('click', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                event.stopPropagation();
+                addForm.style.display = 'block';
+                newTextInput.value = '';
+                newHrefInput.value = 'http://';
+                newNoteInput.value = '';
+                newAdminNoteInput.value = ''; // 清空管理员备注
+                newAdminOnlyInputs.forEach(input => {
+                    input.checked = input.value === 'false';
+                });
+            });
+
+            // 显示网页背景上传表单
+            bgUploadButton.addEventListener('click', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                event.stopPropagation();
+                bgUploadForm.style.display = 'block';
+                bgUploadImageInput.value = '';
+            });
+
+            // 显示编辑标题表单
+            titleEditButton.addEventListener('click', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                event.stopPropagation();
+                editTitleForm.style.display = 'block';
+                editTitleInput.value = siteTitleElement.textContent.replace('服务器', '');
+            });
+
+            // 备份按钮
+            backupButton.addEventListener('click', function(event) {
+                if (!isLoggedIn) return;
+                event.preventDefault();
+                event.stopPropagation();
+                fetch('save_data.php?action=backup', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('备份完毕！');
+                    } else {
+                        alert('备份失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('备份失败:', error);
+                    alert('备份失败，请重试！');
+                });
+            });
+
+            // 提交添加
+            submitAddButton.addEventListener('click', function() {
+                const text = newTextInput.value.trim();
+                let href = newHrefInput.value.trim();
+                const note = newNoteInput.value;
+                const adminNote = newAdminNoteInput.value; // 获取管理员备注
+                const adminOnly = Array.from(newAdminOnlyInputs).find(input => input.checked).value === 'true';
+                if (text && href) {
+                    if (!href.startsWith('http://') && !href.startsWith('https://')) {
+                        href = 'http://' + href;
+                    }
+                    createNavItem(text, href, '', false, null, note, adminOnly, adminNote);
+                    addForm.style.display = 'none';
+                    saveData();
+                } else {
+                    alert('请输入有效的网站名称和链接！');
+                }
+            });
+
+            // 取消添加
+            cancelAddButton.addEventListener('click', function() {
+                addForm.style.display = 'none';
+            });
+
+            // 提交编辑
+            submitEditButton.addEventListener('click', function() {
+                const text = editTextInput.value.trim();
+                let href = editHrefInput.value.trim();
+                const note = editNoteInput.value;
+                const adminNote = editAdminNoteInput.value; // 获取管理员备注
+                const adminOnly = Array.from(editAdminOnlyInputs).find(input => input.checked).value === 'true';
+                if (text && href) {
+                    if (!href.startsWith('http://') && !href.startsWith('https://')) {
+                        href = 'http://' + href;
+                    }
+                    const oldNavItemHTML = editForm.dataset.navItem;
+                    const navItems = Array.from(navMenu.children);
+                    const navItemIndex = navItems.findIndex(item => item.outerHTML === oldNavItemHTML);
+                    if (navItemIndex !== -1) {
+                        const navItem = navItems[navItemIndex];
+                        const oldText = navItem.dataset.text;
+                        navItem.querySelector('a').textContent = text;
+                        navItem.querySelector('a').href = href;
+                        navItem.dataset.text = text;
+                        navItem.dataset.href = href;
+                        navItem.dataset.note = note;
+                        navItem.dataset.adminNote = adminNote; // 更新管理员备注
+                        navItem.dataset.adminOnly = adminOnly ? 'true' : 'false';
+                        navItem.querySelector('.visibility-icon').textContent = adminOnly ? '' : '👁️';
+                        if (!isLoggedIn && adminOnly) {
+                            navItem.style.display = 'none';
+                        } else {
+                            navItem.style.display = 'flex';
+                        }
+                        let noteElement = navItem.querySelector('.note');
+                        if (note) {
+                            if (noteElement) {
+                                noteElement.textContent = note;
+                            } else {
+                                noteElement = document.createElement('span');
+                                noteElement.className = 'note';
+                                noteElement.textContent = note;
+                                navItem.appendChild(noteElement);
+                            }
+                        } else {
+                            if (noteElement) {
+                                noteElement.remove();
+                            }
+                        }
+
+                        if (oldText !== text && navItem.dataset.backgroundImage) {
+                            fetch('save_data.php?action=rename_image', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    oldText: oldText,
+                                    newText: text
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.success) {
+                                    navItem.dataset.backgroundImage = result.newImagePath;
+                                    navItem.style.backgroundImage = `url(${result.newImagePath})`;
+                                } else {
+                                    console.error('重命名图片失败:', result.message);
+                                }
+                            })
+                            .catch(error => console.error('重命名图片失败:', error));
+                        }
+
+                        editForm.style.display = 'none';
+                        saveData();
+                    } else {
+                        alert('编辑失败：找不到对应的导航项！');
+                    }
+                } else {
+                    alert('请输入有效的网站名称和链接！');
+                }
+            });
+
+            // 取消编辑
+            cancelEditButton.addEventListener('click', function() {
+                editForm.style.display = 'none';
+            });
+
+            // 提交标题编辑
+            submitTitleEditButton.addEventListener('click', function() {
+                const newTitle = editTitleInput.value.trim();
+                if (newTitle) {
+                    siteTitleElement.textContent = newTitle + '服务器';
+                    welcomeTextElement.textContent = `欢迎来到${newTitle.replace('怪兽桌游吧', '')}服务器`;
+                    editTitleForm.style.display = 'none';
+                    saveData();
+                } else {
+                    alert('请输入有效的网站标题！');
+                }
+            });
+
+            // 取消标题编辑
+            cancelTitleEditButton.addEventListener('click', function() {
+                editTitleForm.style.display = 'none';
+            });
+
+            // 提交导航项背景图片上传
+            submitUploadButton.addEventListener('click', function() {
+                const file = uploadImageInput.files[0];
+                if (!file) {
+                    alert('请选择一张图片！');
+                    return;
+                }
+
+                const oldNavItemHTML = uploadForm.dataset.navItem;
+                const navItems = Array.from(navMenu.children);
+                const navItemIndex = navItems.findIndex(item => item.outerHTML === oldNavItemHTML);
+                if (navItemIndex === -1) {
+                    alert('上传失败：找不到对应的导航项！');
+                    uploadForm.style.display = 'none';
+                    return;
+                }
+
+                const navItem = navItems[navItemIndex];
+                const text = navItem.dataset.text;
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('text', text);
+
+                fetch('save_data.php?action=upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const imagePath = result.imagePath;
+                        navItem.style.backgroundImage = `url(${imagePath})`;
+                        navItem.style.backgroundColor = '';
+                        navItem.dataset.backgroundImage = imagePath;
+                        saveData();
+                        uploadForm.style.display = 'none';
+                    } else {
+                        alert('上传失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('上传图片失败:', error);
+                    alert('上传图片失败，请重试！');
+                });
+            });
+
+            // 取消导航项背景上传
+            cancelUploadButton.addEventListener('click', function() {
+                uploadForm.style.display = 'none';
+            });
+
+            // 提交网页背景图片上传
+            submitBgUploadButton.addEventListener('click', function() {
+                const file = bgUploadImageInput.files[0];
+                if (!file) {
+                    alert('请选择一张图片！');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('type', 'body');
+
+                fetch('save_data.php?action=upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const imagePath = result.imagePath;
+                        document.body.style.backgroundImage = `url(${imagePath})`;
+                        document.body.style.backgroundSize = 'cover';
+                        document.body.style.backgroundPosition = 'center';
+                        document.body.style.backgroundColor = '';
+                        saveData();
+                        bgUploadForm.style.display = 'none';
+                    } else {
+                        alert('上传失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('上传网页背景失败:', error);
+                    alert('上传网页背景失败，请重试！');
+                });
+            });
+
+            // 取消网页背景上传
+            cancelBgUploadButton.addEventListener('click', function() {
+                bgUploadForm.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
