@@ -56,8 +56,8 @@ if (!file_exists($dataFile)) {
         'navItems' => [],
         'bodyBackground' => '',
         'siteTitle' => 'Moster怪兽桌游吧mini',
-        'adminUser' => 'mifen',
-        'adminPassword' => '222222'
+        'adminUser' => 'admin',
+        'adminPassword' => 'admin'
     ]));
 }
 
