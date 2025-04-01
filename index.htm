@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mini服务器</title>
+    <title>Moster怪兽桌游吧mini服务器</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,6 +29,48 @@
             font-size: 1.5em;
             cursor: pointer;
             color: white;
+        }
+
+        /* 系统控制图标（重启、关机、帮助） */
+        #system-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #reboot-button, #shutdown-button, #help-button {
+            font-size: 1.5em;
+            cursor: pointer;
+            color: white;
+            position: relative;
+        }
+
+        #reboot-button:hover, #shutdown-button:hover, #help-button:hover {
+            color: #ddd;
+        }
+
+        /* 未登录时隐藏系统控制图标 */
+        .not-logged-in #system-controls {
+            display: none !important;
+        }
+
+        /* 帮助图标的提示样式 */
+        #help-button:hover:after, #help-button:active:after {
+            content: "需要增加权限 编辑 sudoers 文件\nsudo visudo\n在 sudoers 文件中添加以下行（假设 PHP 运行用户是 www-data）\nwww-data ALL=(ALL) NOPASSWD: /sbin/reboot, /sbin/shutdown";
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: pre-wrap;
+            z-index: 1000;
+            top: 30px;
+            left: 0;
+            width: 300px;
+            text-align: left;
         }
 
         nav {
@@ -434,6 +476,11 @@
 </head>
 <body class="not-logged-in">
     <header>
+        <div id="system-controls">
+            <div id="reboot-button" title="重启服务器">🔄</div>
+            <div id="shutdown-button" title="关闭服务器">⏻</div>
+            <div id="help-button">❓</div>
+        </div>
         <div id="login-button">🔑</div>
         <h1 id="site-title">Moster怪兽桌游吧mini服务器</h1>
     </header>
@@ -531,6 +578,9 @@
             const backupButton = document.getElementById('backup-button');
             const titleEditButton = document.getElementById('title-edit-button');
             const loginButton = document.getElementById('login-button');
+            const rebootButton = document.getElementById('reboot-button');
+            const shutdownButton = document.getElementById('shutdown-button');
+            const helpButton = document.getElementById('help-button');
             const addForm = document.getElementById('add-form');
             const editForm = document.getElementById('edit-form');
             const uploadForm = document.getElementById('upload-form');
@@ -789,8 +839,8 @@
                             welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
                         }
                         // 加载管理员账户
-                        adminUser = data.adminUser || 'admin';
-                        adminPassword = data.adminPassword || 'admin';
+                        adminUser = data.adminUser || 'admin'; // 从 index.data 加载
+                        adminPassword = data.adminPassword || 'admin'; // 从 index.data 加载
                         updateLoginState();
                         saveData();
                     })
@@ -809,8 +859,8 @@
                         });
                         siteTitleElement.textContent = 'Moster怪兽桌游吧mini服务器';
                         welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
-                        adminUser = 'admin';
-                        adminPassword = 'admin';
+                        adminUser = 'admin'; // 默认值
+                        adminPassword = 'admin'; // 默认值
                         updateLoginState();
                         saveData();
                     });
@@ -908,6 +958,52 @@
             // 取消登录
             cancelLoginButton.addEventListener('click', function() {
                 loginForm.style.display = 'none';
+            });
+
+            // 重启按钮点击事件
+            rebootButton.addEventListener('click', function() {
+                if (!isLoggedIn) return;
+                const confirmReboot = confirm('确定要重启服务器吗？');
+                if (confirmReboot) {
+                    fetch('save_data.php?action=reboot', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('服务器正在重启，请稍后重新访问！');
+                        } else {
+                            alert('重启失败：' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('重启失败:', error);
+                        alert('重启失败，请重试！');
+                    });
+                }
+            });
+
+            // 关机按钮点击事件
+            shutdownButton.addEventListener('click', function() {
+                if (!isLoggedIn) return;
+                const confirmShutdown = confirm('确定要关闭服务器吗？');
+                if (confirmShutdown) {
+                    fetch('save_data.php?action=shutdown', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('服务器正在关闭！');
+                        } else {
+                            alert('关机失败：' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('关机失败:', error);
+                        alert('关机失败，请重试！');
+                    });
+                }
             });
 
             // 拖拽功能
