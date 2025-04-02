@@ -510,7 +510,7 @@
         <label>网站名称：</label>
         <input type="text" id="new-text" placeholder="请输入网站名称">
         <label>网址：</label>
-        <input type="text" id="new-href" placeholder="请输入网站链接" value="http://">
+        <input type="text" id="new-href" placeholder="输入链接（留空为当前目录）">
         <label>备注：</label>
         <textarea id="new-note" rows="5" placeholder="请输入备注（可选）"></textarea>
         <label>管理员备注：（只有管理员可见）</label>
@@ -528,7 +528,7 @@
         <label>网站名称：</label>
         <input type="text" id="edit-text" placeholder="请输入网站名称">
         <label>网址：</label>
-        <input type="text" id="edit-href" placeholder="请输入网站链接">
+        <input type="text" id="edit-href" placeholder="输入链接（留空为当前目录）">
         <label>备注：</label>
         <textarea id="edit-note" rows="5" placeholder="请输入备注（可选）"></textarea>
         <label>管理员备注：（只有管理员可见）</label>
@@ -632,6 +632,10 @@
             let isLoggedIn = false;
             let adminUser = null;
             let adminPassword = null;
+
+            // 获取当前页面所在目录
+            const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            const baseUrl = window.location.origin + currentDir;
 
             // 加载保存的用户名和密码（如果之前选择了保存）
             if (localStorage.getItem('savePassword') === 'true') {
@@ -746,8 +750,21 @@
                 }
             }
 
+            // 处理URL函数：如果为空则返回当前目录，如果是相对路径则拼接
+            function resolveUrl(inputHref) {
+                if (!inputHref || inputHref.trim() === '') {
+                    return baseUrl; // 如果为空，返回当前目录
+                }
+                if (inputHref.startsWith('http://') || inputHref.startsWith('https://')) {
+                    return inputHref; // 如果是完整URL，直接返回
+                }
+                // 如果是相对路径，拼接当前目录
+                return baseUrl + inputHref.trim();
+            }
+
             // 创建导航板块的函数（不触发保存）
             function createNavItem(text, href, backgroundImage = '', locked = false, number = null, note = '', adminOnly = false, adminNote = '') {
+                const resolvedHref = resolveUrl(href);
                 const navItem = document.createElement('div');
                 navItem.className = 'nav-item';
                 navItem.draggable = isLoggedIn && !locked; // 登录且未锁定时可拖动
@@ -761,7 +778,8 @@
                     navItem.classList.add('locked');
                 }
                 navItem.dataset.text = text;
-                navItem.dataset.href = href;
+                navItem.dataset.href = href; // 存储原始输入的href
+                navItem.dataset.resolvedHref = resolvedHref; // 存储解析后的完整URL
                 navItem.dataset.backgroundImage = backgroundImage;
                 navItem.dataset.number = number || (navMenu.children.length + 1);
                 navItem.dataset.note = note;
@@ -777,7 +795,7 @@
                     <span class="image-icon" title="上传背景图片">🖼️</span>
                     <span class="number-icon">${numberIcons[(number || navMenu.children.length + 1) - 1] || (number || navMenu.children.length + 1)}</span>
                     <span class="visibility-icon" title="全部可见">${adminOnly ? '' : '👁️'}</span>
-                    <a href="${href}" target="_blank">${text}</a>
+                    <a href="${resolvedHref}" target="_blank">${text}</a>
                     ${note ? `<span class="note">${note}</span>` : ''}
                 `;
                 navMenu.appendChild(navItem);
@@ -808,16 +826,16 @@
                                     item.number,
                                     item.note || '',
                                     item.adminOnly || false,
-                                    item.adminNote || '' // 加载管理员备注
+                                    item.adminNote || ''
                                 );
                             });
                         } else {
                             const defaultItems = [
-                                { text: '网站1', href: 'http://website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
-                                { text: '网站2', href: 'http://website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
-                                { text: '网站3', href: 'http://website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
-                                { text: '网站4', href: 'http://website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
-                                { text: '网站5', href: 'http://website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
+                                { text: '网站1', href: 'website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
+                                { text: '网站2', href: 'website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
+                                { text: '网站3', href: 'website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
+                                { text: '网站4', href: 'website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
+                                { text: '网站5', href: 'website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
                             ];
                             defaultItems.forEach(item => {
                                 createNavItem(item.text, item.href, item.backgroundImage, item.locked, item.number, item.note, item.adminOnly, item.adminNote);
@@ -847,11 +865,11 @@
                     .catch(error => {
                         console.error('加载数据失败:', error);
                         const defaultItems = [
-                            { text: '网站1', href: 'http://website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
-                            { text: '网站2', href: 'http://website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
-                            { text: '网站3', href: 'http://website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
-                            { text: '网站4', href: 'http://website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
-                            { text: '网站5', href: 'http://website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
+                            { text: '网站1', href: 'website1', backgroundImage: '', locked: false, number: 1, note: '备注1\n换行测试', adminOnly: false, adminNote: '管理员备注1' },
+                            { text: '网站2', href: 'website2', backgroundImage: '', locked: false, number: 2, note: '备注2', adminOnly: false, adminNote: '管理员备注2' },
+                            { text: '网站3', href: 'website3', backgroundImage: '', locked: false, number: 3, note: '备注3\n多行\n测试', adminOnly: true, adminNote: '管理员备注3' },
+                            { text: '网站4', href: 'website4', backgroundImage: '', locked: false, number: 4, note: '备注4', adminOnly: false, adminNote: '管理员备注4' },
+                            { text: '网站5', href: 'website5', backgroundImage: '', locked: false, number: 5, note: '备注5', adminOnly: false, adminNote: '管理员备注5' }
                         ];
                         navMenu.innerHTML = '';
                         defaultItems.forEach(item => {
@@ -870,13 +888,13 @@
             function saveData() {
                 const items = Array.from(navMenu.children).map(navItem => ({
                     text: navItem.dataset.text,
-                    href: navItem.dataset.href,
+                    href: navItem.dataset.href, // 保存原始输入的href
                     backgroundImage: navItem.dataset.backgroundImage,
                     locked: navItem.dataset.locked === 'true',
                     number: parseInt(navItem.dataset.number),
                     note: navItem.dataset.note || '',
                     adminOnly: navItem.dataset.adminOnly === 'true',
-                    adminNote: navItem.dataset.adminNote || '' // 保存管理员备注
+                    adminNote: navItem.dataset.adminNote || ''
                 }));
                 const bodyBackground = document.body.style.backgroundImage ? document.body.style.backgroundImage.replace('url("', '').replace('")', '') : '';
                 const siteTitle = siteTitleElement.textContent.replace('服务器', '');
@@ -1109,7 +1127,7 @@
                         !target.classList.contains('number-icon') && 
                         !target.classList.contains('visibility-icon') && 
                         !target.classList.contains('note')) {
-                        window.open(navItem.dataset.href, '_blank');
+                        window.open(navItem.dataset.resolvedHref, '_blank');
                     }
                     return;
                 }
@@ -1166,9 +1184,9 @@
                     }
                 } else if (target.classList.contains('edit-icon')) {
                     editTextInput.value = navItem.dataset.text;
-                    editHrefInput.value = navItem.dataset.href;
+                    editHrefInput.value = navItem.dataset.href; // 显示原始href
                     editNoteInput.value = navItem.dataset.note || '';
-                    editAdminNoteInput.value = navItem.dataset.adminNote || ''; // 加载管理员备注
+                    editAdminNoteInput.value = navItem.dataset.adminNote || '';
                     const adminOnly = navItem.dataset.adminOnly === 'true';
                     editAdminOnlyInputs.forEach(input => {
                         input.checked = (input.value === 'true') === adminOnly;
@@ -1186,7 +1204,7 @@
                            !target.classList.contains('number-icon') && 
                            !target.classList.contains('visibility-icon') && 
                            !target.classList.contains('note')) {
-                    window.open(navItem.dataset.href, '_blank');
+                    window.open(navItem.dataset.resolvedHref, '_blank');
                 }
             });
 
@@ -1197,9 +1215,9 @@
                 event.stopPropagation();
                 addForm.style.display = 'block';
                 newTextInput.value = '';
-                newHrefInput.value = 'http://';
+                newHrefInput.value = '';
                 newNoteInput.value = '';
-                newAdminNoteInput.value = ''; // 清空管理员备注
+                newAdminNoteInput.value = '';
                 newAdminOnlyInputs.forEach(input => {
                     input.checked = input.value === 'false';
                 });
@@ -1248,19 +1266,17 @@
             // 提交添加
             submitAddButton.addEventListener('click', function() {
                 const text = newTextInput.value.trim();
-                let href = newHrefInput.value.trim();
+                const href = newHrefInput.value.trim();
+                const resolvedHref = resolveUrl(href);
                 const note = newNoteInput.value;
-                const adminNote = newAdminNoteInput.value; // 获取管理员备注
+                const adminNote = newAdminNoteInput.value;
                 const adminOnly = Array.from(newAdminOnlyInputs).find(input => input.checked).value === 'true';
-                if (text && href) {
-                    if (!href.startsWith('http://') && !href.startsWith('https://')) {
-                        href = 'http://' + href;
-                    }
+                if (text) {
                     createNavItem(text, href, '', false, null, note, adminOnly, adminNote);
                     addForm.style.display = 'none';
                     saveData();
                 } else {
-                    alert('请输入有效的网站名称和链接！');
+                    alert('请输入有效的网站名称！');
                 }
             });
 
@@ -1272,14 +1288,12 @@
             // 提交编辑
             submitEditButton.addEventListener('click', function() {
                 const text = editTextInput.value.trim();
-                let href = editHrefInput.value.trim();
+                const href = editHrefInput.value.trim();
+                const resolvedHref = resolveUrl(href);
                 const note = editNoteInput.value;
-                const adminNote = editAdminNoteInput.value; // 获取管理员备注
+                const adminNote = editAdminNoteInput.value;
                 const adminOnly = Array.from(editAdminOnlyInputs).find(input => input.checked).value === 'true';
-                if (text && href) {
-                    if (!href.startsWith('http://') && !href.startsWith('https://')) {
-                        href = 'http://' + href;
-                    }
+                if (text) {
                     const oldNavItemHTML = editForm.dataset.navItem;
                     const navItems = Array.from(navMenu.children);
                     const navItemIndex = navItems.findIndex(item => item.outerHTML === oldNavItemHTML);
@@ -1287,11 +1301,12 @@
                         const navItem = navItems[navItemIndex];
                         const oldText = navItem.dataset.text;
                         navItem.querySelector('a').textContent = text;
-                        navItem.querySelector('a').href = href;
+                        navItem.querySelector('a').href = resolvedHref;
                         navItem.dataset.text = text;
-                        navItem.dataset.href = href;
+                        navItem.dataset.href = href; // 保存原始href
+                        navItem.dataset.resolvedHref = resolvedHref; // 保存解析后的href
                         navItem.dataset.note = note;
-                        navItem.dataset.adminNote = adminNote; // 更新管理员备注
+                        navItem.dataset.adminNote = adminNote;
                         navItem.dataset.adminOnly = adminOnly ? 'true' : 'false';
                         navItem.querySelector('.visibility-icon').textContent = adminOnly ? '' : '👁️';
                         if (!isLoggedIn && adminOnly) {
@@ -1344,7 +1359,7 @@
                         alert('编辑失败：找不到对应的导航项！');
                     }
                 } else {
-                    alert('请输入有效的网站名称和链接！');
+                    alert('请输入有效的网站名称！');
                 }
             });
 
@@ -1389,40 +1404,38 @@
                 }
 
                 const navItem = navItems[navItemIndex];
-                const text = navItem.dataset.text;
                 const formData = new FormData();
                 formData.append('image', file);
-                formData.append('text', text);
+                formData.append('text', navItem.dataset.text);
 
-                fetch('save_data.php?action=upload', {
+                fetch('save_data.php?action=upload_image', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        const imagePath = result.imagePath;
-                        navItem.style.backgroundImage = `url(${imagePath})`;
+                        navItem.dataset.backgroundImage = result.imagePath;
+                        navItem.style.backgroundImage = `url(${result.imagePath})`;
                         navItem.style.backgroundColor = '';
-                        navItem.dataset.backgroundImage = imagePath;
-                        saveData();
                         uploadForm.style.display = 'none';
+                        saveData();
                     } else {
                         alert('上传失败：' + result.message);
                     }
                 })
                 .catch(error => {
-                    console.error('上传图片失败:', error);
-                    alert('上传图片失败，请重试！');
+                    console.error('上传失败:', error);
+                    alert('上传失败，请重试！');
                 });
             });
 
-            // 取消导航项背景上传
+            // 取消上传
             cancelUploadButton.addEventListener('click', function() {
                 uploadForm.style.display = 'none';
             });
 
-            // 提交网页背景图片上传
+            // 提交网页背景上传
             submitBgUploadButton.addEventListener('click', function() {
                 const file = bgUploadImageInput.files[0];
                 if (!file) {
@@ -1431,30 +1444,28 @@
                 }
 
                 const formData = new FormData();
-                formData.append('image', file);
-                formData.append('type', 'body');
+                formData.append('bgImage', file);
 
-                fetch('save_data.php?action=upload', {
+                fetch('save_data.php?action=upload_bg_image', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        const imagePath = result.imagePath;
-                        document.body.style.backgroundImage = `url(${imagePath})`;
+                        document.body.style.backgroundImage = `url(${result.imagePath})`;
                         document.body.style.backgroundSize = 'cover';
                         document.body.style.backgroundPosition = 'center';
                         document.body.style.backgroundColor = '';
-                        saveData();
                         bgUploadForm.style.display = 'none';
+                        saveData();
                     } else {
                         alert('上传失败：' + result.message);
                     }
                 })
                 .catch(error => {
-                    console.error('上传网页背景失败:', error);
-                    alert('上传网页背景失败，请重试！');
+                    console.error('上传失败:', error);
+                    alert('上传失败，请重试！');
                 });
             });
 
