@@ -262,13 +262,13 @@
         .not-logged-in .delete-icon,
         .not-logged-in .edit-icon,
         .not-logged-in .image-icon,
-        .not-logged-in .visibility-icon, /* 未登录时隐藏睁眼图标 */
+        .not-logged-in .visibility-icon,
         .not-logged-in #backup-button,
         .not-logged-in #bg-upload-button,
         .not-logged-in #add-button,
         .not-logged-in #title-edit-button,
         .not-logged-in #last-saved {
-            display: none !important; /* 增加优先级，确保隐藏 */
+            display: none !important;
         }
 
         main {
@@ -420,8 +420,8 @@
             border: none;
             border-radius: 5px;
             font-size: 0.9em;
-            display: inline-block; /* 按钮在一排 */
-            width: 45%; /* 缩小按钮宽度 */
+            display: inline-block;
+            width: 45%;
         }
 
         #add-form #submit-add, #edit-form #submit-edit, #upload-form #submit-upload, #bg-upload-form #submit-bg-upload, #edit-title-form #submit-title-edit, #login-form #submit-login {
@@ -442,26 +442,24 @@
             background-color: #b0bec5;
         }
 
-        /* 单选按钮样式 */
         .admin-only-options {
             display: flex;
             align-items: center;
             margin: 10px 0;
-            flex-wrap: nowrap; /* 防止换行 */
+            flex-wrap: nowrap;
         }
 
         .admin-only-options label {
-            margin-right: 10px; /* 减小间距 */
+            margin-right: 10px;
             display: flex;
             align-items: center;
-            white-space: nowrap; /* 防止文字换行 */
+            white-space: nowrap;
         }
 
         .admin-only-options input {
             margin-right: 5px;
         }
 
-        /* 是否保存密码样式 */
         .save-password-container {
             display: flex;
             align-items: center;
@@ -470,7 +468,7 @@
 
         .save-password-container label {
             margin-right: 10px;
-            white-space: nowrap; /* 防止文字换行 */
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -698,9 +696,8 @@
                     loginButton.textContent = '🔓';
                     loginButton.title = '登出';
                     Array.from(navMenu.children).forEach(navItem => {
-                        navItem.style.display = 'flex'; // 登录后显示所有导航块
-                        navItem.draggable = navItem.dataset.locked === 'true' ? false : true; // 锁定块不可拖动
-                        // 确保图标显示
+                        navItem.style.display = 'flex';
+                        navItem.draggable = navItem.dataset.locked === 'true' ? false : true;
                         const lockIcon = navItem.querySelector('.lock-icon');
                         const deleteIcon = navItem.querySelector('.delete-icon');
                         const editIcon = navItem.querySelector('.edit-icon');
@@ -712,8 +709,7 @@
                         if (imageIcon) imageIcon.style.display = 'block';
                         if (visibilityIcon) visibilityIcon.style.display = 'block';
                     });
-                    lastSavedDisplay.style.display = 'block'; // 登录后显示最后保存时间
-                    // 确保页脚按钮显示
+                    lastSavedDisplay.style.display = 'block';
                     backupButton.style.display = 'flex';
                     bgUploadButton.style.display = 'flex';
                     addButton.style.display = 'flex';
@@ -724,12 +720,11 @@
                     loginButton.title = '登录';
                     Array.from(navMenu.children).forEach(navItem => {
                         if (navItem.dataset.adminOnly === 'true') {
-                            navItem.style.display = 'none'; // 未登录时隐藏管理可见的导航块
+                            navItem.style.display = 'none';
                         } else {
                             navItem.style.display = 'flex';
                         }
-                        navItem.draggable = false; // 未登录时禁用拖动
-                        // 确保图标隐藏
+                        navItem.draggable = false;
                         const lockIcon = navItem.querySelector('.lock-icon');
                         const deleteIcon = navItem.querySelector('.delete-icon');
                         const editIcon = navItem.querySelector('.edit-icon');
@@ -741,8 +736,7 @@
                         if (imageIcon) imageIcon.style.display = 'none';
                         if (visibilityIcon) visibilityIcon.style.display = 'none';
                     });
-                    lastSavedDisplay.style.display = 'none'; // 未登录时隐藏最后保存时间
-                    // 确保页脚按钮隐藏
+                    lastSavedDisplay.style.display = 'none';
                     backupButton.style.display = 'none';
                     bgUploadButton.style.display = 'none';
                     addButton.style.display = 'none';
@@ -753,21 +747,20 @@
             // 处理URL函数：如果为空则返回当前目录，如果是相对路径则拼接
             function resolveUrl(inputHref) {
                 if (!inputHref || inputHref.trim() === '') {
-                    return baseUrl; // 如果为空，返回当前目录
+                    return baseUrl;
                 }
                 if (inputHref.startsWith('http://') || inputHref.startsWith('https://')) {
-                    return inputHref; // 如果是完整URL，直接返回
+                    return inputHref;
                 }
-                // 如果是相对路径，拼接当前目录
                 return baseUrl + inputHref.trim();
             }
 
-            // 创建导航板块的函数（不触发保存）
+            // 创建导航板块的函数
             function createNavItem(text, href, backgroundImage = '', locked = false, number = null, note = '', adminOnly = false, adminNote = '') {
                 const resolvedHref = resolveUrl(href);
                 const navItem = document.createElement('div');
                 navItem.className = 'nav-item';
-                navItem.draggable = isLoggedIn && !locked; // 登录且未锁定时可拖动
+                navItem.draggable = isLoggedIn && !locked;
                 if (backgroundImage) {
                     navItem.style.backgroundImage = `url(${backgroundImage})`;
                 } else {
@@ -778,15 +771,15 @@
                     navItem.classList.add('locked');
                 }
                 navItem.dataset.text = text;
-                navItem.dataset.href = href; // 存储原始输入的href
-                navItem.dataset.resolvedHref = resolvedHref; // 存储解析后的完整URL
+                navItem.dataset.href = href;
+                navItem.dataset.resolvedHref = resolvedHref;
                 navItem.dataset.backgroundImage = backgroundImage;
                 navItem.dataset.number = number || (navMenu.children.length + 1);
                 navItem.dataset.note = note;
                 navItem.dataset.adminOnly = adminOnly ? 'true' : 'false';
-                navItem.dataset.adminNote = adminNote || ''; // 保存管理员备注
+                navItem.dataset.adminNote = adminNote || '';
                 if (!isLoggedIn && adminOnly) {
-                    navItem.style.display = 'none'; // 未登录时隐藏管理可见的导航块
+                    navItem.style.display = 'none';
                 }
                 navItem.innerHTML = `
                     <span class="lock-icon" title="${locked ? '解锁导航块' : '锁定导航块'}">${locked ? '🔒' : '🔓'}</span>
@@ -800,7 +793,7 @@
                 `;
                 navMenu.appendChild(navItem);
                 updateNumbers();
-                updateLoginState(); // 确保创建导航块后更新图标显示状态
+                updateLoginState();
             }
 
             // 从服务器加载数据
@@ -841,14 +834,12 @@
                                 createNavItem(item.text, item.href, item.backgroundImage, item.locked, item.number, item.note, item.adminOnly, item.adminNote);
                             });
                         }
-                        // 加载网页背景
                         if (data && data.bodyBackground) {
                             document.body.style.backgroundImage = `url(${data.bodyBackground})`;
                             document.body.style.backgroundSize = 'cover';
                             document.body.style.backgroundPosition = 'center';
                             document.body.style.backgroundColor = '';
                         }
-                        // 加载网站标题
                         if (data && data.siteTitle) {
                             siteTitleElement.textContent = data.siteTitle + '服务器';
                             welcomeTextElement.textContent = `欢迎来到${data.siteTitle.replace('怪兽桌游吧', '')}服务器`;
@@ -856,9 +847,8 @@
                             siteTitleElement.textContent = 'Moster怪兽桌游吧mini服务器';
                             welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
                         }
-                        // 加载管理员账户
-                        adminUser = data.adminUser || 'admin'; // 从 index.data 加载
-                        adminPassword = data.adminPassword || 'admin'; // 从 index.data 加载
+                        adminUser = data.adminUser || 'admin';
+                        adminPassword = data.adminPassword || 'admin';
                         updateLoginState();
                         saveData();
                     })
@@ -877,8 +867,8 @@
                         });
                         siteTitleElement.textContent = 'Moster怪兽桌游吧mini服务器';
                         welcomeTextElement.textContent = '欢迎来到Moster mini服务器';
-                        adminUser = 'admin'; // 默认值
-                        adminPassword = 'admin'; // 默认值
+                        adminUser = 'admin';
+                        adminPassword = 'admin';
                         updateLoginState();
                         saveData();
                     });
@@ -888,7 +878,7 @@
             function saveData() {
                 const items = Array.from(navMenu.children).map(navItem => ({
                     text: navItem.dataset.text,
-                    href: navItem.dataset.href, // 保存原始输入的href
+                    href: navItem.dataset.href,
                     backgroundImage: navItem.dataset.backgroundImage,
                     locked: navItem.dataset.locked === 'true',
                     number: parseInt(navItem.dataset.number),
@@ -936,11 +926,9 @@
             // 登录/登出按钮点击事件
             loginButton.addEventListener('click', function() {
                 if (isLoggedIn) {
-                    // 登出
                     isLoggedIn = false;
                     updateLoginState();
                 } else {
-                    // 显示登录表单
                     loginForm.style.display = 'block';
                     if (localStorage.getItem('savePassword') !== 'true') {
                         loginUsernameInput.value = '';
@@ -958,7 +946,6 @@
                     isLoggedIn = true;
                     loginForm.style.display = 'none';
                     updateLoginState();
-                    // 保存用户名和密码到 localStorage（如果勾选了保存）
                     if (savePassword) {
                         localStorage.setItem('adminUser', username);
                         localStorage.setItem('adminPassword', password);
@@ -1026,9 +1013,9 @@
 
             // 拖拽功能
             navMenu.addEventListener('dragstart', function(event) {
-                if (!isLoggedIn) return; // 未登录时禁用拖动
+                if (!isLoggedIn) return;
                 const target = event.target.closest('.nav-item');
-                if (!target || target.dataset.locked === 'true') return; // 锁定块不可拖动
+                if (!target || target.dataset.locked === 'true') return;
                 draggedItem = target;
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData('text/plain', null);
@@ -1036,7 +1023,6 @@
                     target.classList.add('dragging');
                 }, 0);
 
-                // 创建占位符
                 placeholder = document.createElement('div');
                 placeholder.className = 'nav-item placeholder';
                 placeholder.style.width = `${target.offsetWidth}px`;
@@ -1076,13 +1062,11 @@
                     navMenu.insertBefore(draggedItem, placeholder);
                 }
 
-                // 移除占位符
                 if (placeholder) {
                     placeholder.remove();
                     placeholder = null;
                 }
 
-                // 拖动结束动画
                 draggedItem.classList.remove('dragging');
                 draggedItem.style.animation = 'dropAnimation 0.3s ease';
                 draggedItem = null;
@@ -1101,7 +1085,6 @@
                 }
             });
 
-            // 拖动结束的缩放动画
             const style = document.createElement('style');
             style.innerHTML = `
                 @keyframes dropAnimation {
@@ -1138,13 +1121,13 @@
                         target.textContent = '🔒';
                         target.setAttribute('title', '解锁导航块');
                         navItem.classList.add('locked');
-                        navItem.draggable = false; // 锁定后禁用拖动
+                        navItem.draggable = false;
                     } else {
                         navItem.dataset.locked = 'false';
                         target.textContent = '🔓';
                         target.setAttribute('title', '锁定导航块');
                         navItem.classList.remove('locked');
-                        navItem.draggable = true; // 解锁后启用拖动
+                        navItem.draggable = true;
                     }
                     saveData();
                     return;
@@ -1184,7 +1167,7 @@
                     }
                 } else if (target.classList.contains('edit-icon')) {
                     editTextInput.value = navItem.dataset.text;
-                    editHrefInput.value = navItem.dataset.href; // 显示原始href
+                    editHrefInput.value = navItem.dataset.href;
                     editNoteInput.value = navItem.dataset.note || '';
                     editAdminNoteInput.value = navItem.dataset.adminNote || '';
                     const adminOnly = navItem.dataset.adminOnly === 'true';
@@ -1303,8 +1286,8 @@
                         navItem.querySelector('a').textContent = text;
                         navItem.querySelector('a').href = resolvedHref;
                         navItem.dataset.text = text;
-                        navItem.dataset.href = href; // 保存原始href
-                        navItem.dataset.resolvedHref = resolvedHref; // 保存解析后的href
+                        navItem.dataset.href = href;
+                        navItem.dataset.resolvedHref = resolvedHref;
                         navItem.dataset.note = note;
                         navItem.dataset.adminNote = adminNote;
                         navItem.dataset.adminOnly = adminOnly ? 'true' : 'false';
@@ -1408,12 +1391,21 @@
                 formData.append('image', file);
                 formData.append('text', navItem.dataset.text);
 
+                console.log('正在上传导航块图片:', { text: navItem.dataset.text, file: file });
+
                 fetch('save_data.php?action=upload_image', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('上传响应状态:', response.status);
+                    if (!response.ok) {
+                        throw new Error('网络响应错误: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(result => {
+                    console.log('上传响应结果:', result);
                     if (result.success) {
                         navItem.dataset.backgroundImage = result.imagePath;
                         navItem.style.backgroundImage = `url(${result.imagePath})`;
@@ -1425,7 +1417,7 @@
                     }
                 })
                 .catch(error => {
-                    console.error('上传失败:', error);
+                    console.error('上传导航块图片失败:', error);
                     alert('上传失败，请重试！');
                 });
             });
@@ -1446,12 +1438,21 @@
                 const formData = new FormData();
                 formData.append('bgImage', file);
 
+                console.log('正在上传网页背景图片:', { file: file });
+
                 fetch('save_data.php?action=upload_bg_image', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('上传响应状态:', response.status);
+                    if (!response.ok) {
+                        throw new Error('网络响应错误: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(result => {
+                    console.log('上传响应结果:', result);
                     if (result.success) {
                         document.body.style.backgroundImage = `url(${result.imagePath})`;
                         document.body.style.backgroundSize = 'cover';
@@ -1464,7 +1465,7 @@
                     }
                 })
                 .catch(error => {
-                    console.error('上传失败:', error);
+                    console.error('上传网页背景失败:', error);
                     alert('上传失败，请重试！');
                 });
             });
